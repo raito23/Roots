@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block content %}
+
+  <h1>{{ title }}</h1>
+<form method="POST" action="./logingin">
+email:<input type="text" name="emf" size="40"><br>
+pw:<input type="password" name="pwf" size="40"><br>
+<input type="submit">
+</form>
+<p>*はじめての方は<a href="./regist">こちら</a>から登録してください。</p>
+
+<div id="error-message" style="color: red;">
+  {% if error_message %}
+      {{ error_message }}
+  {% endif %}
+</div>
+
+{% endblock %}

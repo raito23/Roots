@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<ul>
+{% for eachmsg in message %}
+    <li>{{ eachmsg }}</li>
+{% endfor %}
+</ul>
+
+{% if aflag == 1 %}
+  <p><a href="./">ログインページへ戻る</a>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,67 @@
+<html>
+
+<head>
+  <title>{{ title }}</title>
+</head>
+<style>
+  body {
+    font-family: sans-serif;
+    margin: 20px;
+    padding: 100px;
+  }
+
+  /* Add CSS styles here */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .user-info {
+    text-align: left;
+  }
+
+  form {
+    margin-top: 20px;
+  }
+
+  h2 {
+    margin-top: 20px;
+  }
+
+  .content {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .works-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin: -10px;
+  }
+
+  .album-list,
+  .track-list {
+    flex: 1;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  li {
+    margin-bottom: 10px;
+  }
+</style>
+
+<body>
+  {% block content %}
+  <!-- ここにメインコンテンツを書く -->
+  {% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+<form method="POST" action="./registing">
+ユーザ名: <input type="text" name="unf" size="40"><br>
+email:<input type="text" name="emf" size="40"><br>
+password:<input type="password" name="pwf1" size="40"><br>
+password:<input type="password" name="pwf2" size="40">(確認)<br>
+<input type="submit" value="登録">
+</form>
+
+
+{% endblock %}

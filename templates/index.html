@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="header" style="display: flex; justify-content: space-between; align-items: center;">
+  <h1>{{ title }}</h1>
+  <div class="user-info" style="text-align: left;">
+    <p>ユーザー名: {{ uname }}</p>
+    <p><a href="./logout">logout</a></p>
+  </div>
+</div>
+<div>
+  <form method="GET" action="./artist">
+    <input type="text" name="query" placeholder="アーティスト名を検索">
+    <button type="submit">アーティスト検索</button>
+  </form>
+</div>
+
+<!-- 以下はSpotifyのトップ30楽曲を表示するセクション -->
+<section class="works section">
+  <div class="container">
+    <h2>Japan週間トップ30</h2>
+    <div class="works-list">
+      {% for track in top_tracks %}
+      <div class="works-item">
+        <iframe src="https://open.spotify.com/embed/track/{{ track.track.id }}" width="300" height="380" frameborder="0"
+          allowtransparency="true" allow="encrypted-media"></iframe>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

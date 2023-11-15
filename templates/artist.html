@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="header">
+    <h1>{{ title }}</h1>
+    <div class="user-info">
+        <p>ユーザー名: {{ uname }}</p>
+        <p><a href="./logout">ログアウト</a></p>
+        <p><p><a href="./mypage?back_to_top=true">トップページへ戻る</a></p>
+    </p>
+    </div>
+</div>
+
+<div>
+    <form method="GET" action="./artist">
+        <input type="text" name="query" placeholder="アーティスト名を検索">
+        <button type="submit">アーティスト検索</button>
+    </form>
+</div>
+
+<div>
+    <h2>アーティスト名: {{ artist_name }}</h2>
+    <img src="{{ artist_image }}" alt="Artist Image">
+    <iframe src="https://open.spotify.com/embed/album/{{ albums[0].id }}" width="300" height="380" frameborder="0"
+        allowtransparency="true" allow="encrypted-media"></iframe>
+</div>
+<div class="content">
+    <div class="album-list">
+        <h3>アルバム一覧</h3>
+        <ul>
+            {% for album in albums %}
+            <li>{{ album.name }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
