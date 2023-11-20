@@ -5,32 +5,29 @@
     <div class="user-info">
         <p>ユーザー名: {{ uname }}</p>
         <p><a href="./logout">ログアウト</a></p>
-        <p><p><a href="./mypage?back_to_top=true">トップページへ戻る</a></p>
-    </p>
+        <p><a href="./mypage?back_to_top=true">トップページへ戻る</a></p>
     </div>
 </div>
 
-<div>
+<div class="form_space">
     <form method="GET" action="./artist">
-        <input type="text" name="query" placeholder="アーティスト名を検索">
-        <button type="submit">アーティスト検索</button>
+        <input type="text" name="query_artist" placeholder="アーティスト名" required>
+        <br>
+        <input type="text" name="query_song" placeholder="曲名" required>
+        <button type="submit">検索</button>
     </form>
 </div>
 
 <div>
-    <h2>アーティスト名: {{ artist_name }}</h2>
-    <img src="{{ artist_image }}" alt="Artist Image">
-    <iframe src="https://open.spotify.com/embed/album/{{ albums[0].id }}" width="300" height="380" frameborder="0"
+    <h2>指定した楽曲</h2>
+    <iframe src="https://open.spotify.com/embed/track/{{ song_info.id }}" width="300" height="380" frameborder="0"
         allowtransparency="true" allow="encrypted-media"></iframe>
 </div>
-<div class="content">
-    <div class="album-list">
-        <h3>アルバム一覧</h3>
-        <ul>
-            {% for album in albums %}
-            <li>{{ album.name }}</li>
-            {% endfor %}
-        </ul>
-    </div>
+<div>
+    <h3>類似度の高い曲</h3>
+        {% for track in top_similar_tracks %}
+            <iframe src="https://open.spotify.com/embed/track/{{ track.id }}" width="300" height="380" frameborder="0"
+                allowtransparency="true" allow="encrypted-media"></iframe>
+        {% endfor %}
 </div>
 {% endblock %}

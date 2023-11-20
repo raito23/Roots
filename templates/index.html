@@ -7,17 +7,17 @@
     <p><a href="./logout">logout</a></p>
   </div>
 </div>
-<div>
+<div class="form_space" width="500">
   <form method="GET" action="./artist">
-    <input type="text" name="query" placeholder="アーティスト名を検索">
-    <button type="submit">アーティスト検索</button>
+    <input type="text" name="query_artist" placeholder="アーティスト名" required>
+    <br>
+    <input type="text" name="query_song" placeholder="曲名" required> 
+    <button type="submit">検索</button>
   </form>
 </div>
-
-<!-- 以下はSpotifyのトップ30楽曲を表示するセクション -->
 <section class="works section">
   <div class="container">
-    <h2>Japan週間トップ30</h2>
+    <h2>Japan週間トップ50</h2>
     <div class="works-list">
       {% for track in top_tracks %}
       <div class="works-item">

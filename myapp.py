@@ -3,59 +3,48 @@ from sklearn.metrics.pairwise import cosine_similarity
 import hashlib
 import numpy as np
 from datetime import timedelta
+import psycopg2
+import psycopg2.extras
 import spotipy
 import os
 from spotipy.oauth2 import SpotifyClientCredentials
 from dotenv import load_dotenv
-from flask import Flask
-from pymongo import MongoClient
+
 load_dotenv(override=True)
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = MongoClient(os.getenv('SECRET_KEY'))
-client_id     = MongoClient(os.getenv('CLIENT_ID'))
-client_secret = MongoClient(os.getenv('CLIENT_SECRET'))
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+
+# Spotify APIの認証情報
+client_id = os.getenv('CLIENT_ID')
+client_secret = os.getenv('CLIENT_SECRET')
 
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id,
                                                            client_secret=client_secret),
-                                                           language='ja')
+                     language='ja')
 
-# connection = psycopg2.connect("host=localhost \
-# dbname=MongoClient(os.getenv('DBNAME')) user=MongoClient(os.getenv('USER')) password=MongoClient(os.getenv('PASSWORD'))")
+# PostgreSQLへの接続情報
+db_params = {
+    'host': 'localhost',
+    'dbname': os.getenv('DBNAME'),
+    'user': os.getenv('USER'),
+    'password': os.getenv('PASSWORD')
+}
+
+connection = psycopg2.connect(**db_params)
 
 app.permanent_session_lifetime = timedelta(days=30)
 
+
 #------------------------------------------------------------以下API関連------------------------------------------------------------
-def get_top_tracks():#日本のトップ30を取得
-    results = sp.user_playlist_tracks(user="spotify", playlist_id="37i9dQZEVXbKqiTGXuCOsB", limit=30, market="JP")
+def get_top_tracks():#日本のトップ50を取得
+    results = sp.user_playlist_tracks(user="spotify", playlist_id="37i9dQZEVXbKqiTGXuCOsB", limit=50, market="JP")
     return results['items']
 
-def get_top_tracks_features():#日本のトップ30の特徴量を取得
+def get_top_tracks_features():
     track_ids = [track["track"]["id"] for track in get_top_tracks()]
     features = sp.audio_features(track_ids)
     return features
-top_tracks_features = get_top_tracks_features()
-
-print("コサイン類似度行列:")
-cleaned_features = [
-    {
-        'danceability': track['danceability'],
-        'energy': track['energy'],
-        'instrumentalness': track['instrumentalness'],
-        'loudness': track['loudness'],
-        'speechiness': track['speechiness'],
-        'valence': track['valence']
-    }
-    for track in top_tracks_features
-    if 'audio_features' in track.get('type', '')
-]
-features_matrix = np.array([list(track.values()) for track in cleaned_features])
-print(features_matrix)
-
-# cosine_similarities = cosine_similarity(features_matrix, features_matrix)
-# print(cosine_similarities)
-
-
 #------------------------------------------------------------以下ページ関連------------------------------------------------------------
 @app.before_request
 def before_request():
@@ -65,7 +54,7 @@ def before_request():
     
 @app.route("/", methods=['GET', 'POST'])
 @app.route('/mypage')
-def mypage(): #マイページ
+def mypage():
     if ("uid" in session and session["uid"] > 0 and "uname" in session and len(session["uname"]) > 0) or ("back_to_top" in request.args and request.args["back_to_top"] == "true"):
         uid = session["uid"]
         uname = session["uname"]
@@ -74,21 +63,72 @@ def mypage(): #マイページ
         return redirect("./login")
     
 @app.route('/artist', methods=['GET', 'POST'])
-def artist_page(): #アーティスト検索ページ
-    artist_query = request.args.get('query')
+def artist_page(): 
+    artist_query = request.args.get('query_artist')
+    song_query = request.args.get('query_song')
+    
     if artist_query == "":
         return redirect("./")
-    else:
-        results_search = sp.search(q=artist_query, type="artist", limit=1, market="JP")
-        artist_info = results_search["artists"]["items"][0]
-        artist_id = artist_info["id"]
-        artist_name = artist_info["name"]
-        artist_image = artist_info["images"][0]["url"] if artist_info.get("images") else ""
-        results_artist_albums = sp.artist_albums(artist_id, limit=10)
-        album_list = [album for album in results_artist_albums["items"]]
-        return render_template("artist.html", title="アーティストページ", artist_name=artist_name, artist_image=artist_image, albums=album_list)
+
+    # アーティストの情報を取得
+    results_search_artist = sp.search(q=artist_query, type="artist", limit=1, market="JP")
+    artist_info = results_search_artist["artists"]["items"][0]
+    artist_id = artist_info["id"]
     
-#------------------------------------------------------------以下認証関連------------------------------------------------------------
+    # アーティストのアルバム一覧を取得
+    results_artist_albums = sp.artist_albums(artist_id, limit=15)
+    albums = results_artist_albums['items']
+
+    # アーティストの全トラックを取得
+    all_tracks = []
+    for album in albums:
+        album_id = album['id']
+        results_album_tracks = sp.album_tracks(album_id)
+        all_tracks.extend(results_album_tracks['items'])
+        
+    song_info = None
+    if song_query:
+        for track in all_tracks:
+            if song_query.lower() in track["name"].lower():
+                song_info = track
+                break
+    if song_info is None:
+        return redirect("./")
+    song_features = sp.audio_features([song_info['id']])[0]
+    song_feature_values = [
+        song_features['danceability'],
+        song_features['energy'],
+        song_features['instrumentalness'],
+        song_features['loudness'],
+        song_features['speechiness'],
+        song_features['valence']
+    ]
+
+    top_tracks_features = get_top_tracks_features()
+    cleaned_features = [
+        {
+            'danceability': track['danceability'],
+            'energy': track['energy'],
+            'instrumentalness': track['instrumentalness'],
+            'loudness': track['loudness'],
+            'speechiness': track['speechiness'],
+            'valence': track['valence']
+        }
+        for track in top_tracks_features
+        if 'audio_features' in track.get('type', '')
+    ]
+
+    features_matrix = np.array([list(track.values()) for track in cleaned_features])
+    # コサイン類似度計算
+    similarities = cosine_similarity([song_feature_values], features_matrix)
+    # 類似度が高い順にソートして上位3曲のインデックスを取得
+    top_similar_indices = similarities.argsort()[0][::-1][:5]
+
+    # 上位5曲の情報を取得
+    top_similar_tracks = [top_tracks_features[i] for i in top_similar_indices]
+    return render_template("artist.html", title="Route", song_info=song_info, top_similar_tracks=top_similar_tracks)
+
+# -----------------------------------------------------------以下ログイン関連------------------------------------------------------------
 @app.route('/login', methods=['GET'])
 def login():
     error_message = session.get('error_message')
